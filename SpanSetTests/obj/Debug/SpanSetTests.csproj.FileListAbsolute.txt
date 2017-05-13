@@ -1,0 +1,13 @@
+d:\public\SpanSet\SpanSetTests\bin\Debug\SpanSetTests.dll
+d:\public\SpanSet\SpanSetTests\bin\Debug\SpanSetTests.pdb
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.CoreUtility.dll
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.Text.Data.dll
+d:\public\SpanSet\SpanSetTests\bin\Debug\SpanSet.dll
+d:\public\SpanSet\SpanSetTests\bin\Debug\SpanSet.pdb
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.CoreUtility.xml
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.Text.Data.xml
+d:\public\SpanSet\SpanSetTests\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.xml
+d:\public\SpanSet\SpanSetTests\obj\Debug\SpanSetTests.csprojResolveAssemblyReference.cache
+d:\public\SpanSet\SpanSetTests\obj\Debug\SpanSetTests.dll
+d:\public\SpanSet\SpanSetTests\obj\Debug\SpanSetTests.pdb
