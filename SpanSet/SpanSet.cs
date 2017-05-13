@@ -67,16 +67,14 @@ namespace SpanSet
         {
             SpanTree<T>[] newTrees = null;
 
-            // We're interested in overlapping spans so offset the end
+            // We're interested in overlapping spans so offset the endpoints
             int firstIndex = FirstEndIndexOnOrAfterPosition(trees, span.Start + 1 - offset);
             int lastIndex = LastStartIndexBeforeOrOnPosition(trees, span.End - 1 - offset);
-
 
             if (lastIndex < firstIndex)
             {
                 // The new span falls into the gap between firstIndex and lastIndex
                 Assert(lastIndex + 1 == firstIndex);
-
                 newTrees = trees.InsertAt(firstIndex, new SpanTree<T>(new Span(span.Start - offset, span.Length), data));
             }
             else
@@ -86,7 +84,8 @@ namespace SpanSet
                 Assert((lastIndex >= 0) && (lastIndex < trees.Count));
 
                 int firstPossiblyContainedIndex = (span.Start <= trees[firstIndex].Span.Start + offset) ? firstIndex : (firstIndex + 1);
-                int lastPossiblyContainedIndex = (span.End >= trees[lastIndex].Span.End + offset) ? (lastIndex - 1) : lastIndex;
+                int lastPossiblyContainedIndex = (span.End >= trees[lastIndex].Span.End + offset) ? lastIndex : (lastIndex - 1);
+
 
                 if (lastPossiblyContainedIndex < firstPossiblyContainedIndex)
                 {
@@ -96,6 +95,10 @@ namespace SpanSet
 
                     newTrees = trees.Copy();
                     newTrees[firstIndex] = new SpanTree<T>(tree, newChildren);
+                }
+                else
+                {
+                    // the new span contains zero or more existing nodes.
                 }
 
 

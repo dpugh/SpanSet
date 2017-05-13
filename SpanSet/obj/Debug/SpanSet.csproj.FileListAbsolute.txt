@@ -1,9 +1,0 @@
-d:\public\SpanSet\SpanSet\bin\Debug\SpanSet.dll
-d:\public\SpanSet\SpanSet\bin\Debug\SpanSet.pdb
-d:\public\SpanSet\SpanSet\bin\Debug\Microsoft.VisualStudio.CoreUtility.dll
-d:\public\SpanSet\SpanSet\bin\Debug\Microsoft.VisualStudio.Text.Data.dll
-d:\public\SpanSet\SpanSet\bin\Debug\Microsoft.VisualStudio.CoreUtility.xml
-d:\public\SpanSet\SpanSet\bin\Debug\Microsoft.VisualStudio.Text.Data.xml
-d:\public\SpanSet\SpanSet\obj\Debug\SpanSet.csprojResolveAssemblyReference.cache
-d:\public\SpanSet\SpanSet\obj\Debug\SpanSet.dll
-d:\public\SpanSet\SpanSet\obj\Debug\SpanSet.pdb

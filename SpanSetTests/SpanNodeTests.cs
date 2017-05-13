@@ -89,7 +89,7 @@ namespace SpanSet.Tests
         }
 
         [TestMethod()]
-        public void SpanTreesAddSimpleContained()
+        public void SpanTreesAddSimpleContainedByExisting()
         {
             var trees = new SpanTree<int>[]
                             { new SpanTree<int>(Span.FromBounds(2, 5), 1),
@@ -99,7 +99,6 @@ namespace SpanSet.Tests
             var expectedChildren1 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(1, 2), -1) };
             var expectedChildren2 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(1, 3), -1) };
             var expectedChildren3 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(0, 2), -1) };
-            var expectedChildren4 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(0, 3), -1) };
 
             var newTrees1 = SpanTree<int>.Add(trees, 0, Span.FromBounds(3, 4), -1);
             AssertExpected(expected, newTrees1);
@@ -112,11 +111,36 @@ namespace SpanSet.Tests
             var newTrees3 = SpanTree<int>.Add(trees, 0, Span.FromBounds(2, 4), -1);
             AssertExpected(expected, newTrees3);
             AssertExpected(expectedChildren3, newTrees3[0].Children);
-
-            var newTrees4 = SpanTree<int>.Add(trees, 0, Span.FromBounds(2, 5), -1);
-            AssertExpected(expected, newTrees4);
-            AssertExpected(expectedChildren4, newTrees4[0].Children);
         }
+
+        [TestMethod()]
+        public void SpanTreesAddSimpleContainExisting()
+        {
+            var trees = new SpanTree<int>[]
+                            { new SpanTree<int>(Span.FromBounds(2, 5), 1),
+                              new SpanTree<int>(Span.FromBounds(7, 9), 2),
+                              new SpanTree<int>(Span.FromBounds(8, 10), 3)};
+            var expected = new int[] { -1, 2, 3 };
+            var expectedChildren1 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(0, 3), 1) };
+            var expectedChildren2 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(1, 3), -1) };
+            var expectedChildren3 = new SpanTree<int>[] { new SpanTree<int>(Span.FromBounds(0, 2), -1) };
+
+            var t1 = SpanTree<int>.Add(trees, 0, Span.FromBounds(2, 5), -1);
+            var t2 = SpanTree<int>.Add(trees, 0, Span.FromBounds(3, 6), -1);
+
+            var newTrees1 = SpanTree<int>.Add(trees, 0, Span.FromBounds(2, 5), -1);
+            AssertExpected(expected, newTrees1);
+            AssertExpected(expectedChildren1, newTrees1[0].Children);
+
+            var newTrees2 = SpanTree<int>.Add(trees, 0, Span.FromBounds(3, 6), -1);
+            AssertExpected(expected, newTrees2);
+            AssertExpected(expectedChildren2, newTrees2[0].Children);
+
+            var newTrees3 = SpanTree<int>.Add(trees, 0, Span.FromBounds(2, 4), -1);
+            AssertExpected(expected, newTrees3);
+            AssertExpected(expectedChildren3, newTrees3[0].Children);
+        }
+
 
         private static void AssertExpected<T>(IReadOnlyList<T> expected,
                                               IReadOnlyList<SpanTree<T>> trees,
