@@ -149,6 +149,26 @@ namespace SpanSet.Tests
             Assert.IsTrue(object.ReferenceEquals(trees[0], newTrees5[0].Children[0]));
         }
 
+
+        [TestMethod()]
+        public void SpanTreesAddToLeadingStacked()
+        {
+            var trees = new SpanTree<int>[]
+                            { new SpanTree<int>(Span.FromBounds(2, 20), 1),
+                              new SpanTree<int>(Span.FromBounds(4, 22), 2),
+                              new SpanTree<int>(Span.FromBounds(6, 24), 3),
+                              new SpanTree<int>(Span.FromBounds(8, 26), 4)};
+
+            var expected = new int[] { -1, 1, 2, 3, 4 };
+
+
+            for (int end = 101; (end < 110); ++end)
+            {
+                var newTrees1 = SpanTree<int>.Add(trees, 100, Span.FromBounds(100, end), -1);
+                AssertExpected(expected, newTrees1);
+            }
+        }
+
         private static void AssertExpected<T>(IReadOnlyList<T> expected,
                                               IReadOnlyList<SpanTree<T>> trees,
                                               string label = null)
