@@ -65,92 +65,80 @@ namespace SpanSet
 
         internal static IReadOnlyList<SpanTree<T>> Add(IReadOnlyList<SpanTree<T>> trees, int offset, Span span, T data)
         {
+            Assert(span.Start >= offset);
+            span = new Span(span.Start - offset, span.Length);
+
             SpanTree<T>[] newTrees = null;
 
             // We're interested in overlapping spans so offset the endpoints
-            int firstIndex = FirstEndIndexOnOrAfterPosition(trees, span.Start + 1 - offset);
-            int lastIndex = LastStartIndexBeforeOrOnPosition(trees, span.End - 1 - offset);
+            int firstOverlappedIndex = FirstEndIndexOnOrAfterPosition(trees, span.Start + 1);
+            int lastOverlappedIndex = LastStartIndexBeforeOrOnPosition(trees, span.End - 1);
 
-            if (lastIndex < firstIndex)
+            if (lastOverlappedIndex < firstOverlappedIndex)
             {
-                // The new span falls into the gap between firstIndex and lastIndex
-                Assert(lastIndex + 1 == firstIndex);
-                newTrees = trees.InsertAt(firstIndex, new SpanTree<T>(new Span(span.Start - offset, span.Length), data));
+                // The new span falls into the gap between firstOverlappedIndex and lastOverlappedIndex
+                Assert(lastOverlappedIndex + 1 == firstOverlappedIndex);
+                newTrees = trees.InsertAt(firstOverlappedIndex, new SpanTree<T>(new Span(span.Start, span.Length), data));
             }
             else
             {
-                // the new span overlaps or more existing spans
-                Assert((firstIndex >= 0) && (firstIndex < trees.Count));
-                Assert((lastIndex >= 0) && (lastIndex < trees.Count));
+                // the new span overlaps one or more existing spans
+                Assert((firstOverlappedIndex >= 0) && (firstOverlappedIndex < trees.Count));
+                Assert((lastOverlappedIndex >= 0) && (lastOverlappedIndex < trees.Count));
 
-                int firstPossiblyContainedIndex = (span.Start <= trees[firstIndex].Span.Start + offset) ? firstIndex : (firstIndex + 1);
-                int lastPossiblyContainedIndex = (span.End >= trees[lastIndex].Span.End + offset) ? lastIndex : (lastIndex - 1);
+                int firstContainedStartIndex = FirstStartIndexOnOrAfterPosition(trees, firstOverlappedIndex, lastOverlappedIndex, span.Start);
+                int lastContainedEndIndex = LastEndIndexBeforeOrOnPosition(trees, firstOverlappedIndex, lastOverlappedIndex, span.End);
 
-
-                if (lastPossiblyContainedIndex < firstPossiblyContainedIndex)
+                if (lastContainedEndIndex < firstContainedStartIndex)
                 {
-                    // the new span is contained by an existing lastPossiblyContainedIndex
-                    var tree = trees[firstIndex];
-                    var newChildren = Add(tree.Children, offset + tree.Span.Start, span, data);
-
-                    newTrees = trees.Copy();
-                    newTrees[firstIndex] = new SpanTree<T>(tree, newChildren);
-                }
-                else
-                {
-                    // the new span contains zero or more existing nodes.
-                }
-
-
-                /*
-                if (span.Start > trees[firstIndex].Span.Start + offset)
-                {
-                    // new span starts after start of the span it overlaps.
-                    if (span.End > trees[firstIndex].Span.End + offset)
+                    var tree = trees[firstOverlappedIndex];
+                    if (span.Start < tree.Span.Start)
                     {
-                        // and ends afterwards too ... so the two spans partially overlap and must be added to trees
-                        newTrees = trees.InsertAt(firstIndex + 1, new SpanTree<T>(new Span(span.Start - offset, span.Length), data));
+                        newTrees = trees.InsertAt(firstOverlappedIndex, new SpanTree<T>(span, data));
+                    }
+                    else if (span.End > tree.Span.End)
+                    {
+                        newTrees = trees.InsertAt(firstOverlappedIndex + 1, new SpanTree<T>(span, data));
                     }
                     else
                     {
-                        // the new span ends before or at the end of the span it overlaps so it gets contained with it.
-                        var tree = trees[firstIndex];
-                        var newChildren = Add(tree.Children, offset + tree.Span.Start, span, data);
+                        // the new span is contained by an existing lastPossiblyContainedIndex or starts before it.
+                        var newChildren = Add(tree.Children, tree.Span.Start, span, data);
 
                         newTrees = trees.Copy();
-                        newTrees[firstIndex] = new SpanTree<T>(tree, newChildren);
+                        newTrees[firstOverlappedIndex] = new SpanTree<T>(tree, newChildren);
                     }
                 }
                 else
                 {
-                    // new span starts before the start of the existing span.
-                    if (span.End < trees[firstIndex].Span.End + offset)
+                    // nodes [firstContainedStartIndex ... lastContainedEndIndex] are contained by the new span.
+                    var newChildren = new SpanTree<T>[1 + lastContainedEndIndex - firstContainedStartIndex];
+                    for (int i = firstContainedStartIndex; (i <= lastContainedEndIndex); ++i)
                     {
-                        // new span ends before the end of the existing span, insert the new span before the existing span.
-                        newTrees = trees.InsertAt(firstIndex, new SpanTree<T>(new Span(span.Start - offset, span.Length), data));
+                        var tree = trees[i - firstContainedStartIndex];
+                        newChildren[i - firstContainedStartIndex] = (span.Start == 0) ? tree : new SpanTree<T>(new Span(tree.Span.Start - span.Start, tree.Span.Length), tree.Data, tree.Children);
                     }
-                    else
-                    {
-                        // new span ends on or after the existing span. move existing span into the new space.
-                        var tree = trees[firstIndex];
 
-                        var newChildren = Add(tree.Children, offset + tree.Span.Start, span, data);
+                    var newTree = new SpanTree<T>(new Span(span.Start, span.Length), data, newChildren);
 
-
-                        newTrees = trees.Copy();
-                        newTrees[firstIndex] = new SpanTree<T>(tree, newChildren);
-                    }
+                    newTrees = new SpanTree<T>[trees.Count - (lastContainedEndIndex - firstContainedStartIndex)];
+                    trees.CopyTo(0, newTrees, 0, firstContainedStartIndex);
+                    newTrees[firstContainedStartIndex] = newTree;
+                    trees.CopyTo(lastContainedEndIndex + 1, newTrees, firstContainedStartIndex + 1, trees.Count - (lastContainedEndIndex + 1));
                 }
-                */
             }
 
+            AssertDTI(newTrees, int.MaxValue);
             return newTrees;
         }
 
         internal static int FirstEndIndexOnOrAfterPosition(IReadOnlyList<SpanTree<T>> trees, int position)
         {
-            int lo = 0;
-            int hi = trees.Count - 1;
+            return FirstEndIndexOnOrAfterPosition(trees, 0, trees.Count - 1, position);
+        }
+
+        internal static int FirstEndIndexOnOrAfterPosition(IReadOnlyList<SpanTree<T>> trees, int lo, int hi, int position)
+        {
             while (lo <= hi)
             {
                 int mid = (lo + hi) / 2;
@@ -164,10 +152,33 @@ namespace SpanSet
             return lo;
         }
 
+        internal static int FirstStartIndexOnOrAfterPosition(IReadOnlyList<SpanTree<T>> trees, int position)
+        {
+            return FirstStartIndexOnOrAfterPosition(trees, 0, trees.Count - 1, position);
+        }
+
+        internal static int FirstStartIndexOnOrAfterPosition(IReadOnlyList<SpanTree<T>> trees, int lo, int hi, int position)
+        {
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) / 2;
+                var p = trees[mid].Span.Start;
+                if (p >= position)
+                    hi = mid - 1;
+                else
+                    lo = mid + 1;
+            }
+
+            return lo;
+        }
+
         internal static int LastStartIndexBeforeOrOnPosition(IReadOnlyList<SpanTree<T>> trees, int position)
         {
-            int lo = 0;
-            int hi = trees.Count - 1;
+            return LastStartIndexBeforeOrOnPosition(trees, 0, trees.Count - 1, position);
+        }
+
+        internal static int LastStartIndexBeforeOrOnPosition(IReadOnlyList<SpanTree<T>> trees, int lo, int hi, int position)
+        {
             while (lo <= hi)
             {
                 int mid = (lo + hi) / 2;
@@ -181,9 +192,50 @@ namespace SpanSet
             return hi;
         }
 
+        internal static int LastEndIndexBeforeOrOnPosition(IReadOnlyList<SpanTree<T>> trees, int position)
+        {
+            return LastEndIndexBeforeOrOnPosition(trees, 0, trees.Count - 1, position);
+        }
+
+        internal static int LastEndIndexBeforeOrOnPosition(IReadOnlyList<SpanTree<T>> trees, int lo, int hi, int position)
+        {
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) / 2;
+                var p = trees[mid].Span.End;
+                if (p > position)
+                    hi = mid - 1;
+                else
+                    lo = mid + 1;
+            }
+
+            return hi;
+        }
+
+
         public override string ToString()
         {
             return string.Format("{0}:[{1},{2})", this.Data, this.Span.Start, this.Span.End);
+        }
+
+        [Conditional("DEBUG")]
+        internal static void AssertDTI(IReadOnlyList<SpanTree<T>> trees, int length)
+        {
+            if (trees.Count > 0)
+            {
+                for (int i = 1; (i < trees.Count); ++i)
+                {
+                    Assert(trees[i - 1].Span.Start < trees[i].Span.Start);
+                    Assert(trees[i - 1].Span.End < trees[i].Span.End);
+                }
+
+                Assert(trees[trees.Count - 1].Span.End < length);
+
+                for (int i = 0; (i < trees.Count); ++i)
+                {
+                    AssertDTI(trees[i].Children, trees[i].Span.Length);
+                }
+            }
         }
 
         [Conditional("DEBUG")]
